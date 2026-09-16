@@ -1,0 +1,16 @@
+{
+  "name": "Ruta Cliente",
+  "short_name": "Ruta Cliente",
+  "description": "Base de clientes con coordenadas GPS para mensajería.",
+  "start_url": "./index.html?v=15-smart-search",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b18",
+  "theme_color": "#111827",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

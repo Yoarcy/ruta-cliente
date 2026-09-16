@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>Ruta Cliente</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css?v=31-icon-proposal-4" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="map-lines" aria-hidden="true"></div>
+      <button class="top-menu-btn" type="button" id="topMenuBtn" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+      <div class="route-line" aria-hidden="true">
+        <svg viewBox="0 0 360 170" preserveAspectRatio="none">
+          <path d="M42 130 C96 84 108 150 154 104 S220 64 242 82 S285 118 330 38" />
+          <circle cx="76" cy="101" r="7" />
+          <circle cx="170" cy="92" r="7" />
+          <circle cx="252" cy="84" r="7" />
+        </svg>
+      </div>
+      <div class="brand-row">
+        <div class="brand-pin" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="9" r="2.35" stroke="currentColor" stroke-width="1.9"/></svg>
+        </div>
+        <div>
+          <h1>Ruta Cliente</h1>
+          <p class="subtitle">Conecta clientes, mueve tu mundo</p>
+        </div>
+      </div>
+      <div class="mini-card">Más clientes<br><strong>Un mejor mañana</strong></div>
+    </header>
+
+    <main>
+      <section id="home" class="screen active" aria-labelledby="homeTitle">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span id="totalClients">0</span>
+            <small>clientes guardados</small>
+          </article>
+          <article class="stat-card">
+            <span id="lastSync">Local</span>
+            <small>base de datos</small>
+          </article>
+        </div>
+
+        <h2 id="homeTitle" class="section-title">¿Qué vas a hacer?</h2>
+        <div class="action-grid">
+          <button class="big-action secondary" data-go="search">
+            <span class="action-icon">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="2"/><path d="m15.4 15.4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <strong>Buscar cliente</strong>
+            <small>Buscar por nombre y abrir ubicación</small>
+          </button>
+          <button class="big-action jamazon-action" data-go="jamazon">
+            <span class="action-icon">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5V4Z" stroke="currentColor" stroke-width="1.8"/><path d="M15 4v5h5M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            <strong>Jamazon Call</strong>
+            <small>Excel, llamadas, mensajes, peso y nube</small>
+          </button>
+        </div>
+      </section>
+
+      <section id="jamazon" class="screen" aria-labelledby="jamazonTitle">
+        <div class="screen-bar"><button class="icon-back" data-go="home" aria-label="Volver al inicio">‹</button><h2 id="jamazonTitle" class="section-title compact-title">Jamazon Call</h2></div>
+
+        <div class="glass-card jamazon-panel">
+          <div class="jamazon-import-row">
+            <input id="jamazonExcel" class="file-input" type="file" accept=".xlsx,.xls,.csv" multiple />
+            <label for="jamazonExcel" class="primary-btn file-label">Importar Excel</label>
+            <span id="jamazonFileName" class="hint">Ningún Excel cargado</span>
+          </div>
+
+          <div class="jamazon-filter-grid">
+            <label>Municipio
+              <input id="jamazonTownFilter" list="municipiosList" placeholder="Municipios elegidos..." autocomplete="off" />
+              <select id="jamazonTownSelect" aria-label="Agregar municipio">
+                <option value="">Agregar municipio...</option>
+                <option value="Arroyo Naranjo">Arroyo Naranjo</option>
+                <option value="Boyeros">Boyeros</option>
+                <option value="Centro Habana">Centro Habana</option>
+                <option value="Cerro">Cerro</option>
+                <option value="Cotorro">Cotorro</option>
+                <option value="Diez de Octubre">Diez de Octubre</option>
+                <option value="Guanabacoa">Guanabacoa</option>
+                <option value="Habana del Este">Habana del Este</option>
+                <option value="Habana Vieja">Habana Vieja</option>
+                <option value="La Lisa">La Lisa</option>
+                <option value="Marianao">Marianao</option>
+                <option value="Playa">Playa</option>
+                <option value="Plaza de la Revolución">Plaza de la Revolución</option>
+                <option value="Regla">Regla</option>
+                <option value="San Miguel del Padrón">San Miguel del Padrón</option>
+                <option value="Alquízar">Alquízar</option>
+                <option value="Artemisa">Artemisa</option>
+                <option value="Bahía Honda">Bahía Honda</option>
+                <option value="Bauta">Bauta</option>
+                <option value="Caimito">Caimito</option>
+                <option value="Candelaria">Candelaria</option>
+                <option value="Guanajay">Guanajay</option>
+                <option value="Güira de Melena">Güira de Melena</option>
+                <option value="Mariel">Mariel</option>
+                <option value="San Antonio de los Baños">San Antonio de los Baños</option>
+                <option value="San Cristóbal">San Cristóbal</option>
+                <option value="Batabanó">Batabanó</option>
+                <option value="Bejucal">Bejucal</option>
+                <option value="Güines">Güines</option>
+                <option value="Jaruco">Jaruco</option>
+                <option value="Madruga">Madruga</option>
+                <option value="Melena del Sur">Melena del Sur</option>
+                <option value="Nueva Paz">Nueva Paz</option>
+                <option value="Quivicán">Quivicán</option>
+                <option value="San José de las Lajas">San José de las Lajas</option>
+                <option value="San Nicolás">San Nicolás</option>
+                <option value="Santa Cruz del Norte">Santa Cruz del Norte</option>
+              </select>
+            </label>
+            <label>Buscar
+              <input id="jamazonSearch" placeholder="Nombre o factura..." autocomplete="off" />
+            </label>
+          </div>
+          <datalist id="municipiosList">
+            <option value="Arroyo Naranjo"></option>
+            <option value="Boyeros"></option>
+            <option value="Centro Habana"></option>
+            <option value="Cerro"></option>
+            <option value="Cotorro"></option>
+            <option value="Diez de Octubre"></option>
+            <option value="Guanabacoa"></option>
+            <option value="Habana del Este"></option>
+            <option value="Habana Vieja"></option>
+            <option value="La Lisa"></option>
+            <option value="Marianao"></option>
+            <option value="Playa"></option>
+            <option value="Plaza de la Revolución"></option>
+            <option value="Regla"></option>
+            <option value="San Miguel del Padrón"></option>
+            <option value="Alquízar"></option>
+            <option value="Artemisa"></option>
+            <option value="Bahía Honda"></option>
+            <option value="Bauta"></option>
+            <option value="Caimito"></option>
+            <option value="Candelaria"></option>
+            <option value="Guanajay"></option>
+            <option value="Güira de Melena"></option>
+            <option value="Mariel"></option>
+            <option value="San Antonio de los Baños"></option>
+            <option value="San Cristóbal"></option>
+            <option value="Batabanó"></option>
+            <option value="Bejucal"></option>
+            <option value="Güines"></option>
+            <option value="Jaruco"></option>
+            <option value="Madruga"></option>
+            <option value="Melena del Sur"></option>
+            <option value="Nueva Paz"></option>
+            <option value="Quivicán"></option>
+            <option value="San José de las Lajas"></option>
+            <option value="San Nicolás"></option>
+            <option value="Santa Cruz del Norte"></option>
+          </datalist>
+
+
+          <details class="jamazon-message-box">
+            <summary>Mensaje global</summary>
+            <label>Texto del mensaje
+              <span id="jzSmsCounter" class="sms-counter">0 mensajes · 0/160 caracteres</span>
+              <textarea id="jzMessageText" rows="3" placeholder="Escribe el mensaje para el cliente seleccionado o para todos"></textarea>
+            </label>
+            <label class="check-row"><input id="jzMessageAll" type="checkbox" /> Enviar mensaje a todos los teléfonos cargados</label>
+            <button id="jzSendMessageBtn" class="neon-btn" type="button">Enviar / preparar mensaje</button>
+          </details>
+
+          <div id="jamazonMatches" class="results compact-results"></div>
+        </div>
+
+        <article id="jamazonSelected" class="glass-card jamazon-selected" hidden>
+          <div class="result-top">
+            <div>
+              <h3 id="jzName">Cliente</h3>
+              <small id="jzMeta">Número / Factura</small>
+            </div>
+            <span id="jzTownBadge" class="badge">Municipio</span>
+          </div>
+          <p id="jzAddress" class="hint"></p>
+          <p id="jzPhone" class="hint"></p>
+          <p id="jzWeight" class="hint"></p>
+
+          <div class="jamazon-actions">
+            <button id="jzCallBtn" class="ghost" type="button">Llamar</button>
+            <button id="jzSmsBtn" class="ghost" type="button">Mensaje</button>
+          </div>
+
+          <div class="jamazon-icon-actions">
+            <button id="jzGpsBtn" class="icon-action-btn mapsme-action" type="button" aria-label="Capturar ubicación" title="Capturar ubicación">
+              <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="8" fill="url(#jzMapBg)"/><path d="M16 25s7-6.15 7-12.1A7 7 0 0 0 9 12.9C9 18.85 16 25 16 25Z" fill="white" fill-opacity=".96"/><circle cx="16" cy="12.8" r="2.65" fill="#1c8cff"/><defs><linearGradient id="jzMapBg" x1="5" y1="4" x2="28" y2="29"><stop stop-color="#27E0FF"/><stop offset=".52" stop-color="#168BFF"/><stop offset="1" stop-color="#2457E8"/></linearGradient></defs></svg>
+            </button>
+            <button id="jzCloudBtn" class="icon-action-btn cloud-action" type="button" aria-label="Guardar en nube" title="Guardar en nube" disabled>
+              <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11.5 24h12.2a5.3 5.3 0 0 0 .5-10.58A8.2 8.2 0 0 0 8.3 11.5 6.4 6.4 0 0 0 11.5 24Z" fill="url(#jzCloudBg)"/><path d="M16 12v8m0 0 3-3m-3 3-3-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="jzCloudBg" x1="7" y1="8" x2="27" y2="25"><stop stop-color="#22D3EE"/><stop offset=".55" stop-color="#8B5CF6"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs></svg>
+            </button>
+          </div>
+          <p id="jzGpsStatus" class="hint">Selecciona cliente y captura GPS antes de guardar en nube.</p>
+        </article>
+      </section>
+
+      <section id="search" class="screen" aria-labelledby="searchTitle">
+        <div class="screen-bar"><button class="icon-back" data-go="home" aria-label="Volver al inicio">‹</button><h2 id="searchTitle" class="section-title compact-title">Buscar cliente</h2></div>
+
+        <div class="search-box">
+          <input id="searchInput" placeholder="Escribe parte del nombre..." autocomplete="off" />
+        </div>
+        <div id="results" class="results"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="messageDialog">
+    <div class="dialog-card">
+      <h3 id="dialogTitle">Aviso</h3>
+      <p id="dialogText"></p>
+      <div class="dialog-actions">
+        <button id="dialogAction" class="ghost" type="button" hidden></button>
+        <button id="dialogClose" class="primary-btn" type="button">Entendido</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="cloudDescriptionDialog">
+    <form method="dialog" class="dialog-card">
+      <h3>Descripción del cliente</h3>
+      <p class="hint">Opcional. Si no hace falta, déjala vacía.</p>
+      <textarea id="cloudDescriptionText" rows="4" placeholder="Ej: casa azul, llamar al llegar"></textarea>
+      <div class="dialog-actions">
+        <button id="cloudDescriptionCancel" class="ghost" value="cancel" type="button">Cancelar</button>
+        <button id="cloudDescriptionSave" class="primary-btn" value="save" type="button">Subir a nube</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="topMenuDialog" class="sheet-dialog">
+    <div class="sheet-card">
+      <div class="sheet-head">
+        <h3>Panel rápido</h3>
+        <button id="topMenuClose" class="ghost small-btn">Cerrar</button>
+      </div>
+      <div class="menu-stats">
+        <article><span id="menuTotalClients">0</span><small>clientes guardados</small></article>
+        <article><span id="menuDbStatus">Local</span><small>base de datos</small></article>
+      </div>
+      <details class="excel-data-menu">
+        <summary>Datos del Excel actual</summary>
+        <pre id="jamazonSummary">Clientes: 0 | Peso total: 0</pre>
+      </details>
+      <button class="ghost menu-row" type="button">Exportar base — pronto</button>
+      <button class="ghost menu-row" type="button">Importar base — pronto</button>
+    </div>
+  </dialog>
+
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="app.js?v=31-icon-proposal-4"></script>
+</body>
+</html>

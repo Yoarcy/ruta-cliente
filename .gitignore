@@ -1,0 +1,34 @@
+# Sistema / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Archivos privados locales: NO subir a GitHub
+*password*.txt
+*contraseña*.txt
+*contrasena*.txt
+*recovery*.txt
+*secret*.txt
+*service_role*.txt
+sb_*.txt
+.env
+.env.*
+
+# Temporales
+.tmp/
+tmp/
+*cotraseña*.txt
+*cotrasena*.txt
+
+
+# Node / Capacitor
+node_modules/
+www/
+
+# Android build outputs
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+*.apk
+*.aab

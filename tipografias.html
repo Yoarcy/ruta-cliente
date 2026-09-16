@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparar tipografías - Ruta Cliente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;900&family=Geist:wght@500;700;900&family=Inter:wght@500;700;900&family=Manrope:wght@500;700;800&family=Montserrat:wght@500;700;900&family=Nunito+Sans:wght@600;800;900&family=Outfit:wght@500;700;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=Poppins:wght@500;700;900&family=Roboto:wght@500;700;900&family=Rubik:wght@500;700;900&family=Sora:wght@500;700;800&family=Space+Grotesk:wght@500;700&family=Urbanist:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;color:#f8fbff;background:radial-gradient(540px 320px at 80% 0%,rgba(125,85,255,.45),transparent 65%),radial-gradient(430px 310px at 5% 15%,rgba(39,216,255,.18),transparent 65%),linear-gradient(145deg,#050914,#07101f 55%,#26123a);font-family:Inter,system-ui,sans-serif;padding:18px} .wrap{width:min(720px,100%);margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.back{color:white;text-decoration:none;border:1px solid rgba(180,200,255,.25);background:rgba(255,255,255,.08);padding:10px 13px;border-radius:14px}h1{font-size:1.05rem;margin:0;color:#cbd5e1}.grid{display:grid;gap:12px}.card{border:1px solid rgba(190,205,255,.24);border-radius:20px;padding:18px;background:rgba(8,15,32,.58);box-shadow:0 18px 42px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(14px)}.sample{font-size:2.25rem;line-height:.95;letter-spacing:-.055em;margin-bottom:8px;text-shadow:0 0 18px rgba(70,155,255,.25),0 8px 22px rgba(0,0,0,.36)}.sub{font-size:.82rem;color:#aeb9d2}.name{display:inline-block;margin-top:12px;padding:6px 9px;border-radius:999px;background:linear-gradient(135deg,#27d8ff,#8b55ff);color:#04101d;font-weight:900;font-size:.72rem}.hint{color:#aeb9d2;margin:0 0 16px;font-size:.9rem;line-height:1.4}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top"><h1>Comparador visual de tipografías</h1><a class="back" href="index.html?v=6">Volver</a></div>
+    <p class="hint">Mira cuál se parece más al mockup. Dime el nombre exacto y la pongo en la app.</p>
+    <div class="grid" id="grid"></div>
+  </div>
+<script>
+const fonts=[
+ ['SF Pro / sistema Apple','-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'],
+ ['Google Sans aproximada','Google Sans, Product Sans, Arial, sans-serif'],
+ ['Avenir Next aproximada','Avenir Next, Avenir, sans-serif'],
+ ['Circular Std aproximada','Circular Std, Avenir Next, Arial, sans-serif'],
+ ['Gilroy aproximada','Gilroy, Avenir Next, Urbanist, sans-serif'],
+ ['Sora','Sora'],['Plus Jakarta Sans','Plus Jakarta Sans'],['Urbanist','Urbanist'],['Outfit','Outfit'],['Manrope','Manrope'],['Inter','Inter'],['Geist','Geist'],['DM Sans','DM Sans'],['Poppins','Poppins'],['Montserrat','Montserrat'],['Nunito Sans','Nunito Sans'],['Rubik','Rubik'],['Space Grotesk','Space Grotesk'],['Roboto','Roboto']
+];
+const grid=document.getElementById('grid');
+grid.innerHTML=fonts.map(([name,font])=>`<article class="card"><div class="sample" style="font-family:${font}">Ruta Cliente</div><div class="sub" style="font-family:${font}">Conecta clientes, mueve tu mundo</div><span class="name">${name}</span></article>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "ruta-cliente-pwa",
+  "version": "1.0.0",
+  "description": "App PWA para mensajería: guarda clientes con nombre, número de identidad, descripción y coordenadas GPS. Luego permite buscar por nombre y abrir la ubicación con una app de mapas compatible en Android, como MAPS.ME.",
+  "main": "app.js",
+  "scripts": {
+    "prepare:www": "node scripts/prepare-www.js",
+    "patch:android": "node scripts/patch-android-build.js",
+    "cap:sync": "npm run prepare:www && npx cap sync android && npm run patch:android",
+    "cap:open": "npm run cap:sync && npx cap open android",
+    "android:build:debug": "npm run cap:sync && cd android && gradlew.bat assembleDebug",
+    "android:build:debug:wsl": "npm run cap:sync && cd android && ./gradlew assembleDebug"
+  },
+  "keywords": [],
+  "author": "Yoarcy / DREX",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@capacitor/android": "7.6.9",
+    "@capacitor/cli": "7.6.9",
+    "@capacitor/core": "7.6.9",
+    "xlsx": "^0.18.5"
+  },
+  "private": false
+}
