@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'rutaCliente.clients.v1';
+const JAMAZON_PENDING_KEY = 'messpro.jamazon.pendingCloud.v1';
 const SUPABASE_URL = 'https://tlhtudtxygfagpenghbo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_YucTepmrIvv3UcJUOZ5yOg_o5ijeQjZ';
 const SUPABASE_TABLE = 'clientes';
@@ -41,8 +42,36 @@ function showScreen(id) {
 }
 
 function loadClients() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    return mergeClientCache(Array.isArray(saved) ? saved : [], loadJamazonPendingCloud());
+  }
   catch { return []; }
+}
+function mergeClientCache(base, updates) {
+  const map = new Map(base.map(client => [client.id, client]));
+  for (const client of updates) {
+    if (client._deleted) map.delete(client.id);
+    else map.set(client.id, client);
+  }
+  return [...map.values()];
+}
+// Write the outbox BEFORE any network request. It is also a recovery copy.
+function queueClient(client) {
+  const entry = { ...client, _queueRevision: crypto.randomUUID() };
+  const next = jamazonPendingCloud.filter(item => item.id !== entry.id).concat(entry);
+  localStorage.setItem(JAMAZON_PENDING_KEY, JSON.stringify(next));
+  jamazonPendingCloud = next;
+  clients = mergeClientCache(loadClients(), next);
+  try { persist(); } catch (error) { console.error('Caché local pendiente:', error); }
+  refreshStats();
+  return entry;
+}
+async function cloudFetch(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try { return await fetch(url, { ...options, signal: controller.signal }); }
+  finally { clearTimeout(timeout); }
 }
 function persist(options = {}) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
@@ -52,7 +81,9 @@ function persist(options = {}) {
 function refreshStats(statusText) {
   $('totalClients').textContent = clients.length;
   if ($('menuTotalClients')) $('menuTotalClients').textContent = clients.length;
-  const label = statusText || (cloudReady ? 'Nube' : 'Local');
+  const pending = loadJamazonPendingCloud().length;
+  const label = pending ? `${pending} pendiente(s)` : (statusText || (cloudReady && navigator.onLine ? 'Nube' : 'Local'));
+  if ($('syncPendingStatus')) $('syncPendingStatus').textContent = pending ? `${pending} operación(es) guardada(s) en este teléfono, pendiente(s) de enviar.` : 'Sin envíos pendientes.';
   if ($('lastSync')) $('lastSync').textContent = label;
   if ($('menuDbStatus')) $('menuDbStatus').textContent = label;
 }
@@ -122,10 +153,9 @@ async function saveClient(event) {
   event.preventDefault();
   const lat = Number($('latitude').value.replace(',', '.'));
   const lon = Number($('longitude').value.replace(',', '.'));
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return showMessage('Coordenadas inválidas', 'Revisa latitud y longitud antes de guardar.');
+  if (!$('latitude').value.trim() || !$('longitude').value.trim() || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return showMessage('Coordenadas inválidas', 'Revisa latitud y longitud antes de guardar.');
 
   const id = $('clientId').value || crypto.randomUUID();
-  const existing = clients.findIndex((client) => client.id === id);
   const client = {
     id,
     fullName: $('fullName').value.trim(),
@@ -136,18 +166,11 @@ async function saveClient(event) {
     longitude: lon,
     updatedAt: new Date().toISOString(),
   };
-  if (existing >= 0) clients[existing] = client;
-  else clients.unshift(client);
-  persist();
-
-  const savedInCloud = await saveCloudClient(client, existing >= 0);
+  try { queueClient(client); }
+  catch (error) { return showMessage('No se pudo guardar', 'No hay espacio o el almacenamiento no está disponible. No cierres el formulario; libera espacio y vuelve a guardar.'); }
   clearForm();
-  showMessage(
-    'Cliente guardado',
-    savedInCloud
-      ? 'La información quedó guardada en la nube y también en este dispositivo.'
-      : 'La información quedó guardada en este dispositivo. La nube queda pendiente hasta completar la clave pública de Supabase.'
-  );
+  showMessage('Cliente guardado en el teléfono', 'Sus coordenadas están guardadas. El envío se reintentará al recuperar conexión con la app abierta o al volver a abrirla. Puedes ver los pendientes en el menú.');
+  void flushJamazonPendingCloud();
   showScreen('home');
 }
 function clearForm() {
@@ -170,9 +193,9 @@ async function deleteClient(id) {
   const client = clients.find((item) => item.id === id);
   if (!client) return;
   if (!confirm(`¿Borrar a ${client.fullName}?`)) return;
-  clients = clients.filter((item) => item.id !== id);
-  persist();
-  await deleteCloudClient(id);
+  try { queueClient({ ...client, _deleted: true }); }
+  catch (error) { return showMessage('No se pudo borrar', 'El teléfono no pudo guardar el cambio. Inténtalo de nuevo.'); }
+  void flushJamazonPendingCloud();
 }
 function scheduleSearch() {
   clearTimeout(searchTimer);
@@ -185,10 +208,15 @@ async function searchClients() {
     renderResults();
     return;
   }
-  if (cloudReady) {
-    $('results').innerHTML = emptyState('Buscando coincidencias en la nube...');
+  clients = loadClients();
+  renderResults();
+  if (cloudReady && navigator.onLine) {
     const cloudResults = await searchCloudClients(query);
-    if (cloudResults) clients = cloudResults;
+    if (query !== normalize($('searchInput').value)) return;
+    if (cloudResults) {
+      clients = mergeClientCache(mergeClientCache(loadClients(), cloudResults), loadJamazonPendingCloud());
+      try { persist({ skipRender: true }); } catch (error) { console.error('Caché de búsqueda no guardada:', error); }
+    }
   }
   renderResults();
 }
@@ -301,7 +329,7 @@ async function loadCloudSummary() {
   }
   refreshStats('Nube');
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id`, {
+    const response = await cloudFetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id`, {
       method: 'HEAD',
       headers: supabaseHeaders({ Prefer: 'count=exact' }),
     });
@@ -320,7 +348,7 @@ async function searchCloudClients(query) {
   try {
     const safeQuery = encodeURIComponent(`*${query.replace(/[,*()]/g, ' ')}*`);
     const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&nombre_completo=ilike.${safeQuery}&order=nombre_completo.asc&limit=20`;
-    const response = await fetch(url, { headers: supabaseHeaders() });
+    const response = await cloudFetch(url, { headers: supabaseHeaders() });
     if (!response.ok) throw new Error(await response.text());
     refreshStats('Nube');
     return (await response.json()).map(fromDbClient);
@@ -330,31 +358,27 @@ async function searchCloudClients(query) {
     return null;
   }
 }
-async function saveCloudClient(client, exists) {
-  if (!cloudReady) return false;
+async function saveCloudClient(client) {
+  if (!cloudReady || !navigator.onLine) return false;
   try {
-    const method = exists ? 'PATCH' : 'POST';
-    const url = exists
-      ? `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${encodeURIComponent(client.id)}`
-      : `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
-    const response = await fetch(url, {
-      method,
-      headers: supabaseHeaders({ Prefer: 'return=minimal' }),
+    // Stable UUID + upsert makes retries safe after an uncertain response.
+    const response = await cloudFetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`, {
+      method: 'POST',
+      headers: supabaseHeaders({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
       body: JSON.stringify(toDbClient(client)),
     });
-    if (!response.ok) throw new Error(await response.text());
-    refreshStats('Nube');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return true;
   } catch (error) {
     console.error('Error guardando en Supabase:', error);
-    refreshStats('Local');
     return false;
   }
 }
+
 async function deleteCloudClient(id) {
   if (!cloudReady) return false;
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${encodeURIComponent(id)}`, {
+    const response = await cloudFetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: supabaseHeaders({ Prefer: 'return=minimal' }),
     });
@@ -371,7 +395,6 @@ async function deleteCloudClient(id) {
 // --- Jamazon Call web module inside Ruta Cliente / MessPro ---
 const JAMAZON_STORAGE_KEY = 'messpro.jamazon.rows.v1';
 const JAMAZON_META_KEY = 'messpro.jamazon.meta.v1';
-const JAMAZON_PENDING_KEY = 'messpro.jamazon.pendingCloud.v1';
 const JAMAZON_TOWN_FILTER_KEY = 'messpro.jamazon.townFilter.v1';
 let jamazonRows = loadJamazonRows();
 let jamazonMeta = loadJamazonMeta();
@@ -379,6 +402,7 @@ let jamazonSelected = null;
 let jamazonGps = null;
 let jamazonPendingCloud = loadJamazonPendingCloud();
 let jamazonSearchTimer = null;
+let cloudSyncPromise = null;
 
 initJamazonModule();
 
@@ -386,7 +410,7 @@ function initJamazonModule() {
   if (!$('jamazonExcel')) return;
   $('jamazonExcel').addEventListener('change', importJamazonExcel);
   const savedTownFilter = loadJamazonTownFilter();
-  if ($('jamazonTownFilter') && savedTownFilter) $('jamazonTownFilter').value = savedTownFilter;
+  if ($('jamazonTownFilter') && savedTownFilter !== null) $('jamazonTownFilter').value = savedTownFilter;
   $('jamazonSearch').addEventListener('input', scheduleJamazonSearch);
   $('jamazonTownFilter')?.addEventListener('input', handleJamazonTownInput);
   $('jamazonTownFilter')?.addEventListener('change', handleJamazonTownInput);
@@ -403,6 +427,22 @@ function initJamazonModule() {
   renderJamazonSummary();
   renderJamazonMatches();
   window.addEventListener('online', flushJamazonPendingCloud);
+  window.addEventListener('focus', flushJamazonPendingCloud);
+  document.addEventListener('visibilitychange', () => {
+    persistJamazonTownFilter();
+    if (!document.hidden) void flushJamazonPendingCloud();
+  });
+  window.addEventListener('pagehide', persistJamazonTownFilter);
+  setInterval(() => { if (!document.hidden) void flushJamazonPendingCloud(); }, 30000);
+  $('syncPendingBtn')?.addEventListener('click', async () => {
+    $('syncPendingBtn').disabled = true;
+    try { await flushJamazonPendingCloud(); }
+    finally { $('syncPendingBtn').disabled = false; }
+    refreshStats();
+    showMessage('Envíos pendientes', jamazonPendingCloud.length
+      ? 'Los datos siguen guardados en el teléfono. Comprueba Internet; si el servidor falla, se reintentará sin borrar los pendientes.'
+      : 'No quedan envíos pendientes.');
+  });
   window.addEventListener('focus', continueJamazonSmsQueue);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) continueJamazonSmsQueue(); });
   document.addEventListener('pointerdown', closeJamazonMessageBoxOnOutsideTap);
@@ -415,8 +455,8 @@ const JAMAZON_MUNICIPIOS = [
   'Batabanó', 'Bejucal', 'Güines', 'Jaruco', 'Madruga', 'Melena del Sur', 'Nueva Paz', 'Quivicán', 'San José de las Lajas', 'San Nicolás', 'Santa Cruz del Norte'
 ];
 function loadJamazonTownFilter() {
-  try { return localStorage.getItem(JAMAZON_TOWN_FILTER_KEY) || ''; }
-  catch { return ''; }
+  try { return localStorage.getItem(JAMAZON_TOWN_FILTER_KEY); }
+  catch { return null; }
 }
 function persistJamazonTownFilter() {
   try { localStorage.setItem(JAMAZON_TOWN_FILTER_KEY, $('jamazonTownFilter')?.value || ''); }
@@ -444,6 +484,7 @@ function handleJamazonTownInput(event) {
     const next = previous.concat(exact).join('; ') + '; ';
     input.value = next;
   }
+  persistJamazonTownFilter();
   scheduleJamazonSearch();
 }
 function closeJamazonMessageBoxOnOutsideTap(event) {
@@ -470,7 +511,7 @@ function loadJamazonMeta() {
   catch { return {}; }
 }
 function loadJamazonPendingCloud() {
-  try { return JSON.parse(localStorage.getItem(JAMAZON_PENDING_KEY)) || []; }
+  try { const rows = JSON.parse(localStorage.getItem(JAMAZON_PENDING_KEY)); return Array.isArray(rows) ? rows : []; }
   catch { return []; }
 }
 function renderJamazonFileState() {
@@ -865,22 +906,17 @@ async function uploadJamazonToCloudAfterDescription() {
   persistJamazonRows();
   $('cloudDescriptionDialog').close();
   const client = buildJamazonCloudClient(jamazonSelected);
-  const ok = await saveCloudClient(client, false);
-  if (ok) {
-    clients.unshift(client);
-    persist({ statusText: 'Nube', skipRender: true });
-    showMessage('Guardado en nube', 'Cliente guardado en Supabase.');
-  } else {
-    jamazonPendingCloud.push(client);
-    persistJamazonPendingCloud();
-    renderJamazonSummary();
-    showMessage('Guardado pendiente', 'No hay conexión o Supabase falló. Dejé la operación pendiente para exportarla cuando vuelva la conexión.');
-  }
+  try { queueClient(client); }
+  catch (error) { return showMessage('No se pudo guardar', 'No se pudo guardar el envío pendiente. Libera espacio y vuelve a intentarlo.'); }
+  renderJamazonSummary();
+  showMessage('Cliente guardado en el teléfono', 'Se enviará al recuperar conexión con la app abierta o al volver a abrirla. Consulta los pendientes en el menú.');
+  void flushJamazonPendingCloud();
 }
 function buildJamazonCloudClient(row) {
   const phone = row.telefono || '';
+  if (!row.cloudClientId) { row.cloudClientId = crypto.randomUUID(); persistJamazonRows(); }
   return {
-    id: crypto.randomUUID(),
+    id: row.cloudClientId,
     fullName: row.nombre || `Cliente ${row.numero || phone || 'Jamazon'}`,
     identity: phone,
     phone,
@@ -890,19 +926,33 @@ function buildJamazonCloudClient(row) {
     updatedAt: new Date().toISOString(),
   };
 }
-async function flushJamazonPendingCloud() {
-  if (!jamazonPendingCloud.length || !cloudReady || !navigator.onLine) return;
-  const remaining = [];
-  for (const client of jamazonPendingCloud) {
-    const ok = await saveCloudClient(client, false);
-    if (ok) clients.unshift(client);
-    else remaining.push(client);
-  }
-  jamazonPendingCloud = remaining;
-  persistJamazonPendingCloud();
-  persist({ statusText: remaining.length ? 'Pendiente' : 'Nube', skipRender: true });
-  renderJamazonSummary();
+function flushJamazonPendingCloud() {
+  if (cloudSyncPromise) return cloudSyncPromise;
+  if (!jamazonPendingCloud.length || !cloudReady || !navigator.onLine) return Promise.resolve();
+  cloudSyncPromise = (async () => {
+    for (const snapshot of [...jamazonPendingCloud]) {
+      const current = jamazonPendingCloud.find(item => item.id === snapshot.id);
+      if (current !== snapshot) continue;
+      const ok = snapshot._deleted ? await deleteCloudClient(snapshot.id) : await saveCloudClient(snapshot);
+      if (!ok) break;
+      // Persist the cache first. Never drop a newer edit queued while awaiting HTTP.
+      clients = loadClients();
+      persist({ skipRender: true });
+      const remaining = jamazonPendingCloud.filter(item => item !== snapshot);
+      localStorage.setItem(JAMAZON_PENDING_KEY, JSON.stringify(remaining));
+      jamazonPendingCloud = remaining;
+    }
+  })().catch(error => {
+    console.error('Sincronización pendiente, se reintentará:', error);
+  }).finally(() => {
+    cloudSyncPromise = null;
+    refreshStats();
+    renderJamazonSummary();
+    renderResults();
+  });
+  return cloudSyncPromise;
 }
+
 function renderJamazonMatchesForSelected() {
   if (!jamazonSelected) return;
   const box = $('jamazonMatches');
