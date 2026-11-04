@@ -33,13 +33,19 @@ test('municipio escrito, múltiple y vacío sobreviven reapertura',()=>{
  b.elements.get('jamazonTownFilter').value='';b.run("handleJamazonTownInput({target:$('jamazonTownFilter')})");
  assert.equal(b.store.get(TOWN),''); assert.equal(boot(b.store).elements.get('jamazonTownFilter').value,'');
 });
-test('guardar formulario offline, reabrir, buscar y enviar después',async()=>{
+test('guardar formulario offline, reabrir, buscar y enviar teléfono después',async()=>{
  const b=boot();for(const [id,v] of Object.entries({fullName:'Cliente Playa',identity:'555',latitude:'23.1',longitude:'-82.4',description:'Portal azul'})) b.elements.get(id).value=v;
  await b.run('saveClient({preventDefault(){}})');assert.equal(JSON.parse(b.store.get(KEY)).length,1);
  const reopened=boot(b.store);reopened.elements.get('searchInput').value='Playa';await reopened.run('searchClients()');assert.match(reopened.elements.get('results').innerHTML,/Portal azul/);
- let calls=0;reopened.c.navigator.onLine=true;reopened.c.fetch=async(u,o)=>{calls++;assert.equal(o.method,'POST');assert.match(u,/on_conflict=id/);assert.match(o.headers.Prefer,/merge-duplicates/);return {ok:true};};
+ let calls=0;reopened.c.navigator.onLine=true;reopened.c.fetch=async(u,o)=>{calls++;assert.equal(o.method,'POST');assert.match(u,/on_conflict=id/);assert.match(o.headers.Prefer,/merge-duplicates/);assert.equal(JSON.parse(o.body).telefono,'555');return {ok:true};};
  await reopened.run('flushJamazonPendingCloud()');assert.equal(calls,1);assert.equal(JSON.parse(b.store.get(KEY)).length,0);
  assert.equal(reopened.run('loadClients().length'),1);
+});
+test('sincronización elimina caché borrada en nube y conserva pendientes',async()=>{
+ const store=new Map([['rutaCliente.clients.v1',JSON.stringify([{...sample('old'),fullName:'Borrado en nube'}])],[KEY,JSON.stringify([sample('pending')])]]);
+ const b=boot(store);b.c.navigator.onLine=true;b.c.fetch=async()=>({ok:true,json:async()=>[{id:'cloud',nombre_completo:'Cliente Nube',telefono:'222',latitud:1,longitud:2}]});
+ assert.equal(await b.run('syncCloudClients()'),true);assert.equal(b.run("loadClients().some(x=>x.id==='old')"),false);assert.equal(b.run("loadClients().some(x=>x.id==='pending')"),true);
+ b.elements.get('searchInput').value='222';b.run('renderResults()');assert.match(b.elements.get('results').innerHTML,/Cliente Nube/);
 });
 test('fallo HTTP y respuesta perdida conservan cola; reintentos usan mismo UUID',async()=>{
  const b=boot();b.c.item=sample();b.run('queueClient(item)');b.c.navigator.onLine=true;let ids=[];
@@ -54,9 +60,9 @@ test('sincronizaciones simultáneas y edición durante envío no pierden cambios
  assert.equal(JSON.parse(b.store.get(KEY))[0].latitude,24);
  b.c.fetch=async()=>({ok:true});await b.run('flushJamazonPendingCloud()');assert.equal(JSON.parse(b.store.get(KEY)).length,0);assert.equal(b.run('loadClients()[0].latitude'),24);
 });
-test('búsqueda nube conserva otros clientes y no pisa coordenadas pendientes',async()=>{
+test('búsqueda nube usa nombre o teléfono y no pisa coordenadas pendientes',async()=>{
  const b=boot();b.c.item=sample();b.run('queueClient(item)');b.c.navigator.onLine=true;
- b.c.fetch=async()=>({ok:true,json:async()=>[{id:'a',nombre_completo:'Cliente Playa',latitud:0,longitud:0},{id:'b',nombre_completo:'Otro Playa',latitud:2,longitud:3}]});
+ b.c.fetch=async(u)=>{assert.match(u,/telefono\.ilike/);return {ok:true,json:async()=>[{id:'a',nombre_completo:'Cliente Playa',telefono:'555',latitud:0,longitud:0},{id:'b',nombre_completo:'Otro Playa',telefono:'999',latitud:2,longitud:3}]};};
  b.elements.get('searchInput').value='playa';await b.run('searchClients()');assert.equal(b.run('loadClients().length'),2);assert.equal(b.run("loadClients().find(x=>x.id==='a').latitude"),23.1);
  b.c.navigator.onLine=false;const r=boot(b.store);r.elements.get('searchInput').value='Otro';await r.run('searchClients()');assert.match(r.elements.get('results').innerHTML,/Otro Playa/);
 });

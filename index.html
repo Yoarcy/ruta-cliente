@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <title>Ruta Cliente</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=32-offline-persistence" />
+  <link rel="stylesheet" href="styles.css?v=34-phone-cloud-mirror" />
 </head>
 <body>
   <div class="app-shell">
@@ -53,7 +53,7 @@
               <svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="2"/><path d="m15.4 15.4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             </span>
             <strong>Buscar cliente</strong>
-            <small>Buscar por nombre y abrir ubicación</small>
+            <small>Buscar por nombre o teléfono y abrir ubicación</small>
           </button>
           <button class="big-action jamazon-action" data-go="jamazon">
             <span class="action-icon">
@@ -226,7 +226,7 @@
         <div class="screen-bar"><button class="icon-back" data-go="home" aria-label="Volver al inicio">‹</button><h2 id="searchTitle" class="section-title compact-title">Buscar cliente</h2></div>
 
         <div class="search-box">
-          <input id="searchInput" placeholder="Escribe parte del nombre..." autocomplete="off" />
+          <input id="searchInput" placeholder="Escribe nombre o teléfono..." autocomplete="off" inputmode="search" />
         </div>
         <button class="ghost" data-go="capture" type="button">Agregar cliente sin conexión</button>
         <div id="results" class="results"></div>
@@ -269,7 +269,7 @@
       </div>
       <p id="syncPendingStatus" class="hint">Sin envíos pendientes.</p>
       <button id="syncPendingBtn" class="ghost" type="button">Enviar pendientes ahora</button>
-      <p class="hint">Ruta Cliente v32 · Los pendientes se envían con la app abierta o al volver a abrirla.</p>
+      <p class="hint">Ruta Cliente v34 · Envía pendientes y mantiene el teléfono sincronizado con Supabase.</p>
       <details class="excel-data-menu">
         <summary>Datos del Excel actual</summary>
         <pre id="jamazonSummary">Clientes: 0 | Peso total: 0</pre>
@@ -280,6 +280,6 @@
   </dialog>
 
   <script src="vendor/xlsx.full.min.js"></script>
-  <script src="app.js?v=32-offline-persistence"></script>
+  <script src="app.js?v=34-phone-cloud-mirror"></script>
 </body>
 </html>
